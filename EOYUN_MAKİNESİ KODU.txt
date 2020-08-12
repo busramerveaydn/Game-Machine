@@ -1,0 +1,87 @@
+--BUSRA MERVE AYDIN 348336 1. OGRETIM
+--MUALLANUR ERDOGDU 348332 1. OGRETIM
+--OYUN MAKINESI
+
+Library IEEE;
+Use IEEE.STD_LOGIC_1164.ALL;
+Use IEEE.STD_LOGIC_ARITH.ALL;
+Use IEEE.STD_LOGIC_UNSIGNED.ALL;
+Use IEEE.NUMERIC_STD.ALL;
+
+Entity eoyun_makinesi is
+Port(Butun_sayi : in bit;
+     reset      : in bit;
+     set        : in bit;
+     Kazan      : out bit;
+     Kaybet     : out bit;
+     F          : out std_logic_vector(3 downto 0));
+End eoyun_makinesi;
+
+Architecture Behv of eoyun_makinesi is
+	signal say   : bit;
+	signal sakla : bit;
+	signal Toplam: std_logic_vector(3 downto 0):="0000";
+	signal Kayit : std_logic_vector(3 downto 0):="0000";
+	TYPE tDurumlar is (START, WIN, LOST, CONTINUE);
+	signal dSimdiki_Durum,dSonraki_Durum : tDurumlar := START;
+Begin
+	F <= Toplam;
+	Process (Butun_sayi,reset,Toplam,dSimdiki_Durum)
+	Begin
+		say   <= '0';
+		sakla <= '0';
+		Kazan <= '0';
+		Kaybet<= '0';
+		CASE dSimdiki_Durum is
+
+			When START =>
+			if(Butun_sayi = '1') Then 
+				say <= '1';
+			elsif((Toplam ="1011" )or( Toplam = "1111")) Then 
+				dSonraki_Durum <= WIN;
+			elsif((Toplam = "0101")or(Toplam = "0110")or(Toplam = "1100")) Then
+				dSonraki_Durum <= LOST;
+			else
+				sakla <= '1';
+				dSonraki_Durum <= CONTINUE;
+			End if;
+
+			When WIN=>
+			Kazan <= '1';
+			if(reset='1') Then 
+				dSonraki_Durum <= START;
+			End if;
+
+			When LOST =>
+			Kaybet <= '1';
+			if(reset='1') Then 
+				dSonraki_Durum <= START;
+			End if;
+		
+			When CONTINUE =>
+			if(Butun_sayi = '1') Then 
+				say <= '1';
+			elsif(Toplam = kayit) Then
+				dSonraki_Durum <= WIN;
+			elsif(Toplam = "1000") Then
+				dSonraki_Durum <= LOST;
+			End if;
+		End CASE;
+	End Process;
+	Process (set)
+	Begin 
+		if set' event and set = '1' then
+			dSimdiki_Durum <= dSonraki_Durum;
+			if (sakla = '1') then
+				Kayit <= Toplam;
+			End if;
+			if (Butun_sayi = '1') then
+				if (Toplam = "1111") then 
+					Toplam <= "0001";
+				else 
+					Toplam <= Toplam + "0001";
+				End if;
+			End if;
+		End if;
+	End Process;
+End Behv;
